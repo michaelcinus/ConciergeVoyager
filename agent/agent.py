@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv  # ← Aggiungi questo import
+from dotenv import load_dotenv 
 from google import genai
 from google.adk.agents import Agent, LlmAgent
 from google.adk.models.google_llm import Gemini
@@ -9,10 +9,10 @@ from google.adk.tools import AgentTool, google_search, load_memory
 from google.adk.runners import Runner
 from google.genai import types
 
-# Carica variabili da .env
-load_dotenv()  # ← Aggiungi questa riga
+# Load variables from .env
+load_dotenv()
 
-# Configura client con API key dal .env
+# Configure client with API key from .env
 api_key = os.environ.get("GOOGLE_API_KEY")
 if not api_key:
     raise ValueError("GOOGLE_API_KEY non configurata nel file .env!")
@@ -32,7 +32,7 @@ model = Gemini(
     retry_options=retry_config,
 )
 
-# ---------- Agenti specializzati ----------
+# ---------- Specialized agents ----------
 
 flight_agent = Agent(
     name="FlightAgent",
