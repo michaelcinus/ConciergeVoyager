@@ -1,0 +1,8 @@
+# File: .gitignore
+.env
+*.db
+__pycache__/
+*.pyc
+venv/
+agent_sessions.db
+travel_sessions.db
