@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # ← Aggiungi questo import
 from google import genai
 from google.adk.agents import Agent, LlmAgent
 from google.adk.models.google_llm import Gemini
@@ -9,8 +9,8 @@ from google.adk.tools import AgentTool, google_search, load_memory
 from google.adk.runners import Runner
 from google.genai import types
 
-# Load variables from .env
-load_dotenv()
+# Carica variabili da .env
+load_dotenv()  # ← Aggiungi questa riga
 
 # Configura client con API key dal .env
 api_key = os.environ.get("GOOGLE_API_KEY")
@@ -32,7 +32,7 @@ model = Gemini(
     retry_options=retry_config,
 )
 
-# ---------- Specialized agents ----------
+# ---------- Agenti specializzati ----------
 
 flight_agent = Agent(
     name="FlightAgent",
@@ -40,10 +40,7 @@ flight_agent = Agent(
     instruction=(
         """You are a travel agent tasked with finding 2-3 relevant flight options 
         given an origin airport, destination, and travel dates. Use google_search tool. 
-        Return prices, times, and airlines in a concise format.
-        
-        IMPORTANT: Always respond in the same language the user is using. 
-        If the language is unclear, default to English."""
+        Return prices, times, and airlines in a concise format."""
     ),
     tools=[google_search],
     output_key="flight_options",
@@ -55,10 +52,7 @@ hotel_agent = Agent(
     instruction=(
         """You are a hotel agent tasked with finding 2-3 accommodation options 
         given destination, dates, and approximate budget. Use google_search tool. 
-        Include area, rating, and price range in your concise response.
-        
-        IMPORTANT: Always respond in the same language the user is using. 
-        If the language is unclear, default to English."""
+        Include area, rating, and price range in your concise response."""
     ),
     tools=[google_search],
     output_key="hotel_options",
@@ -70,10 +64,7 @@ activities_agent = Agent(
     instruction=(
         """You are an activities agent tasked with recommending 3-5 relevant local 
         activities or excursions for a given destination and trip length. 
-        Use google_search tool. Respond with concise bullet points.
-        
-        IMPORTANT: Always respond in the same language the user is using. 
-        If the language is unclear, default to English."""
+        Use google_search tool. Respond with concise bullet points."""
     ),
     tools=[google_search],
     output_key="activity_options",
@@ -84,36 +75,37 @@ activities_agent = Agent(
 root_agent = LlmAgent(
     name="TravelRouterAgent",
     model=model,
-    description="Multi-agent travel concierge router agent with session memory.",
+    description="Multi-agent travel concierge router",
     instruction=(
-        """You are a travel concierge assisting user travel planning. 
+        """You are a travel concierge coordinating specialized agents.
 
-LANGUAGE: Always respond in the same language the user is using (Italian, English, Spanish, etc.). 
-If the language is unclear, default to English.
+LANGUAGE: Match the user's language (Italian, English, Spanish, etc.). Default to English if unclear.
 
-WORKFLOW:
-1. When user says they want to travel, proactively ask for ALL required info:
-   - Departure city/airport
-   - Destination(s)
-   - Travel dates (or month/season)
-   - Trip duration
-   - Budget range
+STEP-BY-STEP PROCESS:
+1. Gather ALL trip details from user:
+   - Departure location ✓
+   - Destination ✓
+   - Dates ✓
+   - Duration ✓
+   - Budget ✓
 
-2. Use load_memory to check if you already know user preferences.
+2. Check load_memory for any saved preferences
 
-3. When you have ALL travel parameters, you MUST invoke ALL three specialized agents:
-   - Call FlightAgent to get flight options
-   - Call HotelAgent to get accommodation options  
-   - Call ActivitiesAgent to get things to do and activities
+3. When you have complete info, execute this EXACT sequence:
+   
+   FIRST: Call FlightAgent with departure, destination, and dates
+   THEN: Call HotelAgent with destination, dates, and budget  
+   FINALLY: Call ActivitiesAgent with destination and duration
+   
+   YOU MUST CALL ALL THREE AGENTS IN ORDER. No exceptions.
 
-4. After receiving results from ALL THREE agents, summarize everything clearly with 
-   2-3 complete trip packages including flights, hotels, and activities.
+4. After ALL THREE agents respond, compile results into 2-3 trip packages.
 
-IMPORTANT: 
-- Always call all three agents (FlightAgent, HotelAgent, ActivitiesAgent) together 
-  when you have complete trip information. Do not skip any agent.
-- Maintain the conversation in the user's language throughout the entire interaction.
-- If any parameter is missing, ask clarifying questions rather than guessing."""
+CRITICAL RULES:
+- Never skip calling any of the three agents
+- Always call them in sequence: Flight → Hotel → Activities
+- If user gives partial info, ask for missing details before calling agents
+- Maintain conversation in user's language"""
     ),
     tools=[load_memory, AgentTool(flight_agent), AgentTool(hotel_agent), AgentTool(activities_agent)],
 )
